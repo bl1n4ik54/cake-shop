@@ -3,19 +3,20 @@
 WORKDIR /app
 
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV DATABASE_URL=postgresql://railway:railway@localhost:5432/railway?schema=public
-ENV DIRECT_URL=postgresql://railway:railway@localhost:5432/railway?schema=public
 
 COPY package.json package-lock.json ./
 COPY prisma ./prisma
-RUN npm ci
+RUN DATABASE_URL=postgresql://build:build@localhost:5432/build?schema=public \
+    DIRECT_URL=postgresql://build:build@localhost:5432/build?schema=public \
+    npm ci
 
 COPY . .
-RUN npm run build
+RUN DATABASE_URL=postgresql://build:build@localhost:5432/build?schema=public \
+    DIRECT_URL=postgresql://build:build@localhost:5432/build?schema=public \
+    npm run build
 
 ENV NODE_ENV=production
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "npm run db:migrate && npm run db:seed && npm run start"]
-
+CMD ["sh", "-c", "export DIRECT_URL=\"${DIRECT_URL:-$DATABASE_URL}\" && npm run db:migrate && npm run db:seed && npm run start"]
