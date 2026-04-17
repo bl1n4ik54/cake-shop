@@ -19,4 +19,4 @@ ENV NODE_ENV=production
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "export DIRECT_URL=\"${DIRECT_URL:-$DATABASE_URL}\" && npm run db:migrate && npm run db:seed && npm run start"]
+CMD ["sh", "-c", "export DATABASE_URL=\"${DATABASE_URL:-$DIRECT_URL}\" && export DIRECT_URL=\"${DIRECT_URL:-$DATABASE_URL}\" && npm run db:migrate && npm run db:seed && npm run start"]
