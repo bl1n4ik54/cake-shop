@@ -1,94 +1,103 @@
-﻿# Cake Shop · Next.js Full Stack
+# Cake Shop · Next.js Full Stack
 
-Интернет-магазин тортов на Next.js (App Router) с полноценным бэкендом:
+Интернет-магазин тортов на Next.js (App Router) с Prisma и PostgreSQL.
 
-- каталог тортов из базы данных
-- корзина с хранением в `localStorage`
+## Что внутри
+
+- каталог тортов из БД
+- корзина в `localStorage`
 - оформление заказа через API
-- админ-страница для просмотра заказов по `ADMIN_API_KEY`
-- Prisma + SQLite
-- Docker и `docker-compose` для деплоя на сервер
+- админка заказов с `ADMIN_API_KEY`
+- Prisma ORM + миграции (`prisma/migrations`)
+- готовый деплой на Vercel
 
 ## Технологии
 
 - Next.js 16 + React 19 + TypeScript
 - Tailwind CSS 4
 - Prisma ORM
-- SQLite
-- Zod (валидация API)
+- PostgreSQL
+- Zod
 
-## Быстрый старт (локально)
+## Локальный запуск
 
-1. Установите зависимости:
+1. Установи зависимости:
 
 ```bash
 npm install
 ```
 
-2. Создайте и заполните БД:
+2. Создай `.env`:
 
 ```bash
-npm run db:setup
+cp .env.example .env
 ```
 
-3. Запустите dev-сервер:
+3. Укажи `DATABASE_URL` и `DIRECT_URL` на твою Postgres БД.
+
+4. Примени миграции и заполни каталог:
+
+```bash
+npm run db:migrate
+npm run db:seed
+```
+
+5. Запусти проект:
 
 ```bash
 npm run dev
 ```
 
-Откройте `http://localhost:3000`.
-
 ## Скрипты
 
-- `npm run dev` - запуск в режиме разработки
-- `npm run build` - production-сборка
+- `npm run dev` - dev-сервер
+- `npm run build` - `prisma generate` + `prisma migrate deploy` + `next build`
 - `npm run start` - запуск production-сборки
 - `npm run lint` - линтинг
-- `npm run db:push` - применить схему Prisma в БД
-- `npm run db:seed` - наполнить каталог тестовыми тортами
+- `npm run db:push` - синхронизация схемы Prisma с БД
+- `npm run db:migrate` - запуск миграций Prisma
+- `npm run db:seed` - сид каталога тортов
 - `npm run db:setup` - `db:push` + `db:seed`
 
-## Переменные окружения
-
-Скопируйте `.env.example` в `.env` и при необходимости измените значения.
+## ENV
 
 ```env
-DATABASE_URL="file:./dev.db"
+DATABASE_URL="postgresql://USER:PASSWORD@HOST-POOLER:6543/DB_NAME?pgbouncer=true&connection_limit=1&schema=public"
+DIRECT_URL="postgresql://USER:PASSWORD@HOST:5432/DB_NAME?schema=public"
 ADMIN_API_KEY="replace-with-strong-admin-key"
 NEXT_PUBLIC_STORE_NAME="Сладкий Слой"
 ```
 
+## Деплой на Vercel
+
+1. Запушь проект в GitHub.
+2. В Vercel импортируй репозиторий.
+3. В `Project Settings -> Environment Variables` добавь:
+
+- `DATABASE_URL`
+- `DIRECT_URL`
+- `ADMIN_API_KEY`
+- `NEXT_PUBLIC_STORE_NAME`
+
+4. Запусти Deploy.
+
+Важно: при сборке вызывается `prisma migrate deploy`, поэтому миграции применяются автоматически.
+
 ## API
 
-- `GET /api/cakes` - получить каталог тортов
-- `POST /api/orders` - создать заказ
-- `GET /api/orders` - получить список заказов (требует заголовок `x-admin-key`)
+- `GET /api/cakes`
+- `POST /api/orders`
+- `GET /api/orders` (нужен заголовок `x-admin-key`)
 
-## Деплой на сервер через Docker
-
-1. На сервере установите Docker и Docker Compose.
-2. Загрузите проект и перейдите в папку `cake-shop`.
-3. Создайте `.env` из `.env.example` и укажите надёжный `ADMIN_API_KEY`.
-4. Запустите контейнер:
+## Docker (локально/сервер)
 
 ```bash
 docker compose up -d --build
 ```
 
-5. Приложение будет доступно на `http://<server-ip>:3000`.
+Поднимутся:
 
-Что уже настроено для сервера:
+- `db` (PostgreSQL)
+- `web` (Next.js)
 
-- production-сборка приложения внутри Docker
-- автоматическое применение схемы Prisma при старте контейнера
-- автоматический seed каталога
-- persistent volume `cake_shop_data` для хранения SQLite-файла
-- рестарт контейнера `unless-stopped`
-
-## Админ-панель
-
-Страница: `http://localhost:3000/admin`
-
-Для просмотра заказов введите значение `ADMIN_API_KEY` из `.env`.
-
+Сайт будет на `http://localhost:3000`.
