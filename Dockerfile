@@ -3,6 +3,8 @@
 WORKDIR /app
 
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV DATABASE_URL=postgresql://railway:railway@localhost:5432/railway?schema=public
+ENV DIRECT_URL=postgresql://railway:railway@localhost:5432/railway?schema=public
 
 COPY package.json package-lock.json ./
 COPY prisma ./prisma
