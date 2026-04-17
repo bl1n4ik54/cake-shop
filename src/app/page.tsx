@@ -1,26 +1,27 @@
 ﻿import Link from "next/link";
+import { desc, eq } from "drizzle-orm";
+import { cakes as cakesTable } from "@/db/schema";
 import { CatalogClient } from "@/components/catalog-client";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 import type { CakeCardItem } from "@/types/store";
 
 export const dynamic = "force-dynamic";
 
 async function getCatalog(): Promise<CakeCardItem[]> {
   try {
-    const cakes = await prisma.cake.findMany({
-      where: { inStock: true },
-      orderBy: { createdAt: "desc" },
-    });
-
-    return cakes.map((cake) => ({
-      id: cake.id,
-      slug: cake.slug,
-      name: cake.name,
-      description: cake.description,
-      imageUrl: cake.imageUrl,
-      weightGrams: cake.weightGrams,
-      price: cake.price,
-    }));
+    return await db
+      .select({
+        id: cakesTable.id,
+        slug: cakesTable.slug,
+        name: cakesTable.name,
+        description: cakesTable.description,
+        imageUrl: cakesTable.imageUrl,
+        weightGrams: cakesTable.weightGrams,
+        price: cakesTable.price,
+      })
+      .from(cakesTable)
+      .where(eq(cakesTable.inStock, true))
+      .orderBy(desc(cakesTable.createdAt));
   } catch {
     return [];
   }
@@ -100,4 +101,3 @@ export default async function Home() {
     </div>
   );
 }
-

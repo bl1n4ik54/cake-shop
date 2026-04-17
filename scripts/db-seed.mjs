@@ -1,8 +1,15 @@
-﻿import { PrismaClient } from "@prisma/client";
+import postgres from "postgres";
 
-const prisma = new PrismaClient();
+const connectionString = process.env.DATABASE_URL ?? process.env.DIRECT_URL;
 
-const cakes = [
+if (!connectionString) {
+  console.error("DATABASE_URL or DIRECT_URL environment variable is required.");
+  process.exit(1);
+}
+
+const sql = postgres(connectionString, { max: 1, prepare: false });
+
+const cakesSeed = [
   {
     slug: "red-velvet-classic",
     name: "Red Velvet Classic",
@@ -72,22 +79,40 @@ const cakes = [
 ];
 
 async function main() {
-  for (const cake of cakes) {
-    await prisma.cake.upsert({
-      where: { slug: cake.slug },
-      update: {
-        name: cake.name,
-        description: cake.description,
-        imageUrl: cake.imageUrl,
-        weightGrams: cake.weightGrams,
-        price: cake.price,
-        inStock: cake.inStock,
-      },
-      create: cake,
-    });
+  for (const cake of cakesSeed) {
+    await sql`
+      INSERT INTO "Cake" (
+        "slug",
+        "name",
+        "description",
+        "imageUrl",
+        "weightGrams",
+        "price",
+        "inStock",
+        "updatedAt"
+      ) VALUES (
+        ${cake.slug},
+        ${cake.name},
+        ${cake.description},
+        ${cake.imageUrl},
+        ${cake.weightGrams},
+        ${cake.price},
+        ${cake.inStock},
+        CURRENT_TIMESTAMP
+      )
+      ON CONFLICT ("slug")
+      DO UPDATE SET
+        "name" = EXCLUDED."name",
+        "description" = EXCLUDED."description",
+        "imageUrl" = EXCLUDED."imageUrl",
+        "weightGrams" = EXCLUDED."weightGrams",
+        "price" = EXCLUDED."price",
+        "inStock" = EXCLUDED."inStock",
+        "updatedAt" = CURRENT_TIMESTAMP;
+    `;
   }
 
-  console.log(`Seed complete. Cakes upserted: ${cakes.length}`);
+  console.log(`Seed complete. Cakes upserted: ${cakesSeed.length}`);
 }
 
 main()
@@ -96,6 +121,5 @@ main()
     process.exit(1);
   })
   .finally(async () => {
-    await prisma.$disconnect();
+    await sql.end({ timeout: 5 });
   });
-

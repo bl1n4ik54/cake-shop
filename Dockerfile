@@ -5,15 +5,10 @@ WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 
 COPY package.json package-lock.json ./
-COPY prisma ./prisma
-RUN DATABASE_URL=postgresql://build:build@localhost:5432/build?schema=public \
-    DIRECT_URL=postgresql://build:build@localhost:5432/build?schema=public \
-    npm ci
+RUN npm ci
 
 COPY . .
-RUN DATABASE_URL=postgresql://build:build@localhost:5432/build?schema=public \
-    DIRECT_URL=postgresql://build:build@localhost:5432/build?schema=public \
-    npm run build
+RUN npm run build
 
 ENV NODE_ENV=production
 

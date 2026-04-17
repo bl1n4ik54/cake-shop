@@ -1,21 +1,21 @@
-# Cake Shop · Next.js Full Stack
+﻿# Cake Shop · Next.js + Drizzle ORM
 
-Интернет-магазин тортов на Next.js (App Router) с Prisma и PostgreSQL.
+Интернет-магазин тортов на Next.js (App Router) с PostgreSQL и Drizzle ORM.
 
 ## Что внутри
 
-- каталог тортов из БД
-- корзина в `localStorage`
-- оформление заказа через API
-- админка заказов с `ADMIN_API_KEY`
-- Prisma ORM + миграции (`prisma/migrations`)
-- готовый деплой на Vercel
+- Каталог тортов из БД
+- Корзина в `localStorage`
+- Оформление заказа через API
+- Админ-страница заказов по `ADMIN_API_KEY`
+- Идемпотентная миграция БД (`scripts/db-migrate.mjs`)
+- Сид каталога через Drizzle (`scripts/db-seed.ts`)
 
 ## Технологии
 
 - Next.js 16 + React 19 + TypeScript
 - Tailwind CSS 4
-- Prisma ORM
+- Drizzle ORM + postgres-js
 - PostgreSQL
 - Zod
 
@@ -33,7 +33,7 @@ npm install
 cp .env.example .env
 ```
 
-3. Укажи `DATABASE_URL` и `DIRECT_URL` на твою Postgres БД.
+3. Укажи `DATABASE_URL` (и опционально `DIRECT_URL`).
 
 4. Примени миграции и заполни каталог:
 
@@ -50,54 +50,39 @@ npm run dev
 
 ## Скрипты
 
-- `npm run dev` - dev-сервер
-- `npm run build` - `prisma generate` + `prisma migrate deploy` + `next build`
-- `npm run start` - запуск production-сборки
-- `npm run lint` - линтинг
-- `npm run db:push` - синхронизация схемы Prisma с БД
-- `npm run db:migrate` - запуск миграций Prisma
-- `npm run db:seed` - сид каталога тортов
-- `npm run db:setup` - `db:push` + `db:seed`
+- `npm run dev` — dev-сервер
+- `npm run build` — production build
+- `npm run start` — запуск production-сборки
+- `npm run lint` — линтинг
+- `npm run db:generate` — генерация SQL-миграций Drizzle (опционально)
+- `npm run db:migrate` — идемпотентная миграция БД
+- `npm run db:seed` — сид каталога
+- `npm run db:deploy` — `db:migrate` + `db:seed`
+- `npm run db:setup` — alias для `db:deploy`
 
 ## ENV
 
 ```env
-DATABASE_URL="postgresql://USER:PASSWORD@HOST-POOLER:6543/DB_NAME?pgbouncer=true&connection_limit=1&schema=public"
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DB_NAME?schema=public"
 DIRECT_URL="postgresql://USER:PASSWORD@HOST:5432/DB_NAME?schema=public"
 ADMIN_API_KEY="replace-with-strong-admin-key"
-NEXT_PUBLIC_STORE_NAME="Сладкий Слой"
+NEXT_PUBLIC_STORE_NAME="Sweet Layer"
 ```
 
-## Деплой на Vercel
+`DIRECT_URL` опционален. Если он пустой, приложение использует `DATABASE_URL`.
 
-1. Запушь проект в GitHub.
-2. В Vercel импортируй репозиторий.
-3. В `Project Settings -> Environment Variables` добавь:
+## Railway
 
-- `DATABASE_URL`
-- `DIRECT_URL`
+Для web-сервиса задай минимум:
+
+- `DATABASE_URL` (reference на Postgres service)
 - `ADMIN_API_KEY`
 - `NEXT_PUBLIC_STORE_NAME`
 
-4. Запусти Deploy.
-
-Важно: при сборке вызывается `prisma migrate deploy`, поэтому миграции применяются автоматически.
+`DIRECT_URL` можно задать тем же значением, но это не обязательно.
 
 ## API
 
 - `GET /api/cakes`
 - `POST /api/orders`
 - `GET /api/orders` (нужен заголовок `x-admin-key`)
-
-## Docker (локально/сервер)
-
-```bash
-docker compose up -d --build
-```
-
-Поднимутся:
-
-- `db` (PostgreSQL)
-- `web` (Next.js)
-
-Сайт будет на `http://localhost:3000`.
